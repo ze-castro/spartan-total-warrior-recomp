@@ -1,0 +1,5 @@
+# Lift-time patches of the game's code (tools/lift.py apply_patches): address, expected old dword, new dword (all hex).
+#
+# Widescreen: the game's device setup (function 0x19d730) stores its aspect ratio with `movss xmm0, [0x297c68]` (the constant 4/3, which
+# unrelated code shares). Here that one load is redirected to 0x7E0F0000, a word the runtime fills with 4/3 or 16/9 (runtime/main.c).
+0x19d874 0x297c68 0x7e0f0000

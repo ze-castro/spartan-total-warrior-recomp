@@ -1,0 +1,23 @@
+# Game data and anything derived from it: never commit these. The game is copyrighted; you supply your own disc.
+game/
+game_disc/
+game_disc.partial/
+*.iso
+*.xbe
+*.xiso
+analysis/
+build/
+build2/
+# Machine-local state
+save/
+stw_settings.txt
+stw_input.log
+.venv/
+__pycache__/
+*.pyc
+.DS_Store
+*.dSYM/
+# Fetched on demand (scripts/fetch_oovpa.sh): third-party signature database with its own license
+tools/oovpa/
+# Debug dumps
+*.ppm

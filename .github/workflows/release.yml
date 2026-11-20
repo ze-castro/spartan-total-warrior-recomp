@@ -1,0 +1,39 @@
+name: release
+# Pushing a version tag (v1.2.3) builds the app and attaches it to a GitHub Release.
+# CI has no copy of the game, so the app is the runtime plus the tools only: the translated game code is built on the user's machine from their own disc.
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  app:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the app
+        run: |
+          set -euo pipefail
+          VERSION="${GITHUB_REF_NAME#v}" scripts/make_app.sh
+      - name: Check that nothing derived from the game is in the app
+        run: |
+          set -e
+          app="build/Spartan Total Warrior.app"
+          test ! -e "$app/Contents/Resources/game"
+          ! find "$app" \( -name 'lifted*' -o -name '*.xbe' -o -name '*.iso' -o -name 'functions.json' \) | grep .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Spartan-Total-Warrior-macos-arm64
+          path: |
+            build/*.zip
+            build/*.dmg
+      - name: Attach to the release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            build/*.zip
+            build/*.dmg
+          body_path: RELEASE_NOTES.md
+          name: Spartan Total Warrior for macOS ${{ github.ref_name }}
