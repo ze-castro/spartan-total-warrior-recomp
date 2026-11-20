@@ -43,6 +43,10 @@ void input_log(const char *fmt, ...) {
 }
 
 static uint8_t keys[128], mbtn[8];
+/* While Cmd is down macOS does not send key-up events for the other keys. A key that was held when Cmd went down, or pressed with Cmd held, is
+ * therefore "unconfirmed": at every poll it is checked against the real keyboard state, so releasing it while Cmd is still held (hold W, Cmd + click
+ * for a rage move, let go of W) cannot leave it stuck. */
+static uint8_t unconfirmed[128];
 static int mods_held, mouselook;
 static double acc_dx, acc_scroll;                   /* mouse motion / scroll wheel since the last poll */
 static double zoom_level;                           /* leaky integrator: a wheel flick keeps zooming for a few polls */
@@ -170,9 +174,17 @@ double input_sensitivity(void) { return stw_settings_get().sens; }
 
 /* ---- events from the window ---- */
 void input_scroll(double d) { pthread_mutex_lock(&lock); acc_scroll += d; pthread_mutex_unlock(&lock); }
-void input_key(uint16_t code, int down) { if (code < 128) { pthread_mutex_lock(&lock); keys[code] = down; pthread_mutex_unlock(&lock); } }
+void input_key(uint16_t code, int down) {
+    if (code >= 128) return;
+    pthread_mutex_lock(&lock);
+    keys[code] = down;
+    unconfirmed[code] = down && (mods_held & MOD_CMD);              /* pressed with Cmd held: its key-up may never arrive */
+    pthread_mutex_unlock(&lock);
+}
 void input_mods(int mask) {                          /* modifier keys also count as keys, so "Shift" can be a binding of its own */
     pthread_mutex_lock(&lock);
+    if ((mask & MOD_CMD) && !(mods_held & MOD_CMD))                 /* Cmd went down: every key held right now loses its key-up from here on */
+        for (int c = 0; c < 128; c++) if (keys[c] && c != 54 && c != 55) unconfirmed[c] = 1;
     mods_held = mask;
     keys[56] = keys[60] = (mask & MOD_SHIFT) != 0;
     keys[55] = keys[54] = (mask & MOD_CMD) != 0;
@@ -180,7 +192,7 @@ void input_mods(int mask) {                          /* modifier keys also count
     keys[58] = keys[61] = (mask & MOD_OPT) != 0;
     pthread_mutex_unlock(&lock);
 }
-void input_release_all(void) { pthread_mutex_lock(&lock); memset(keys, 0, sizeof keys); memset(mbtn, 0, sizeof mbtn); mods_held = 0; pthread_mutex_unlock(&lock); }
+void input_release_all(void) { pthread_mutex_lock(&lock); memset(keys, 0, sizeof keys); memset(unconfirmed, 0, sizeof unconfirmed); memset(mbtn, 0, sizeof mbtn); mods_held = 0; pthread_mutex_unlock(&lock); }
 void input_mouse_button(int b, int down) { if (b >= 0 && b < 8) { pthread_mutex_lock(&lock); mbtn[b] = down; pthread_mutex_unlock(&lock); } }
 void input_mouse_move(double dx, double dy) { (void)dy; pthread_mutex_lock(&lock); acc_dx += dx; pthread_mutex_unlock(&lock); }     /* vertical motion is ignored */
 int input_mouselook(void) { return mouselook; }
@@ -259,6 +271,9 @@ void input_poll(PadState *p) {
     double dx, scroll;
     pthread_mutex_lock(&lock);
     cfg_load();
+    for (int c = 0; c < 128; c++)                                   /* drop unconfirmed keys the keyboard says are up */
+        if (unconfirmed[c] && keys[c] && !CGEventSourceKeyState(kCGEventSourceStateCombinedSessionState, (CGKeyCode)c)) keys[c] = 0;
+    for (int c = 0; c < 128; c++) if (!keys[c]) unconfirmed[c] = 0;
     memcpy(k, keys, sizeof k); memcpy(mb, mbtn, sizeof mb); mods = mods_held;
     dx = acc_dx; scroll = acc_scroll; acc_dx = acc_scroll = 0;
     int on[STW_NACTIONS];

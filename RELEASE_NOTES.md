@@ -1,6 +1,15 @@
-# Spartan: Total Warrior for macOS 1.0.1
+# Spartan: Total Warrior for macOS 1.0.2
 
-## What's new in 1.0.1
+## What's new in 1.0.2
+
+**Fixed: a direction key could stay stuck after using Cmd.** macOS does not send key-up events for other keys while Cmd is held. If you held a
+direction (for example `W`), pressed Cmd + click for a rage move, and let go of the direction while Cmd was still down, the game never saw the key
+released and kept moving that way. Keys that were held or pressed while Cmd was down are now checked against the real keyboard state, so they
+are released correctly. Keys pressed without Cmd behave as before.
+
+If you notice the opposite (a direction stops for a moment while you hold it during a Cmd attack), please report it.
+
+## What was new in 1.0.1
 
 A small fix to the launcher window. While the game was being prepared on the first run, two things overlapped:
 
@@ -19,7 +28,7 @@ copy of the game (a PAL / Europe disc image); nothing from the game is included 
 
 ## Install
 
-1. Download `Spartan-Total-Warrior-1.0.1-macos-arm64.dmg` (or `.zip`) and drag the app to Applications.
+1. Download `Spartan-Total-Warrior-1.0.2-macos-arm64.dmg` (or `.zip`) and drag the app to Applications.
 2. The app is not signed by an Apple developer account. The first time, right-click the app and choose **Open**, then **Open** again (or run
    `xattr -dr com.apple.quarantine "/Applications/Spartan Total Warrior.app"`).
 3. You need the Xcode command line tools (`xcode-select --install`) and Python 3 (it comes with them).
