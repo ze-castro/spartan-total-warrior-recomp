@@ -292,7 +292,7 @@ static int extract_cb(uint64_t done, uint64_t total, const char *name, void *ctx
                                       : @"No game found. Choose your Spartan: Total Warrior (PAL) disc image (.iso), or a folder extracted from it.";
     self.gameStatus.textColor = ok ? [NSColor colorWithCalibratedRed:0.1 green:0.5 blue:0.2 alpha:1] : [NSColor colorWithCalibratedRed:0.75 green:0.2 blue:0.1 alpha:1];
     self.playBtn.enabled = ok;
-    self.chooseBtn.enabled = YES;
+    self.chooseBtn.enabled = YES; self.chooseBtn.hidden = NO;
     self.progress.hidden = YES; self.cancelBtn.hidden = YES;
 }
 - (void)alert:(NSString *)msg {
@@ -350,7 +350,7 @@ static int extract_cb(uint64_t done, uint64_t total, const char *name, void *ctx
         return;
     }
     self.extracting = YES; self.cancelExtract = NO;
-    self.chooseBtn.enabled = NO; self.playBtn.enabled = NO;
+    self.chooseBtn.enabled = NO; self.chooseBtn.hidden = YES; self.playBtn.enabled = NO;
     self.progress.hidden = NO; self.progress.doubleValue = 0; self.cancelBtn.hidden = NO;
     self.gameStatus.textColor = NSColor.labelColor;
     self.gameStatus.stringValue = @"Copying the game files from the disc image (about 2 GB, once)...";
@@ -366,6 +366,7 @@ static int extract_cb(uint64_t done, uint64_t total, const char *name, void *ctx
         NSString *eS = @(e);
         dispatch_async(dispatch_get_main_queue(), ^{
             self.extracting = NO;
+            self.progress.hidden = YES; self.cancelBtn.hidden = YES; self.chooseBtn.hidden = NO;       /* the copy is over (preparation has its own panel below) */
             if (rc == 0) [self useGameRoot:destS.UTF8String iso:isoS.UTF8String];
             else { [self refreshGame]; if (!self.cancelExtract) [self alert:[NSString stringWithFormat:@"Could not copy the game files: %@", eS]]; }
         });
@@ -556,27 +557,27 @@ static NSString *describe(StwBinding b) {
     if (getenv("STW_LAUNCHERSHOT")) fprintf(stderr, "[launcher] scale=%d selected=%d\n", c.scale, (int)self.res.indexOfSelectedItem);
     [v addSubview:self.res];
     [self label:@"in game: F1 / F2 = lower / higher" at:NSMakeRect(150, top - 24, 340, 16) bold:NO in:v].font = [NSFont systemFontOfSize:11];
-    [self label:@"Aspect ratio" at:NSMakeRect(16, top - 58, 120, 20) bold:YES in:v];          /* widescreen: a self-contained section */
-    self.aspect = [[NSPopUpButton alloc] initWithFrame:NSMakeRect(150, top - 62, 340, 26) pullsDown:NO];
+    [self label:@"Aspect ratio" at:NSMakeRect(16, top - 50, 120, 20) bold:YES in:v];          /* widescreen: a self-contained section */
+    self.aspect = [[NSPopUpButton alloc] initWithFrame:NSMakeRect(150, top - 54, 340, 26) pullsDown:NO];
     [self.aspect addItemsWithTitles:@[@"4:3   original picture", @"16:9   widescreen (wider view, HUD kept proportional)"]];
     [self.aspect selectItemAtIndex:c.widescreen ? 1 : 0];
     self.aspect.target = self; self.aspect.action = @selector(aspectChanged:);          /* the resolution list shows sizes for the chosen aspect */
     [v addSubview:self.aspect];
-    [self label:@"Mouse look" at:NSMakeRect(16, top - 98, 120, 20) bold:YES in:v];
+    [self label:@"Mouse look" at:NSMakeRect(16, top - 88, 120, 20) bold:YES in:v];
     self.sens = [NSSlider sliderWithValue:slider_from_sens(c.sens) minValue:0 maxValue:1 target:self action:@selector(sliderChanged:)];
-    self.sens.frame = NSMakeRect(150, top - 100, 280, 24);
+    self.sens.frame = NSMakeRect(150, top - 90, 280, 24);
     [v addSubview:self.sens];
-    self.sensLabel = [self label:@"" at:NSMakeRect(440, top - 98, 56, 20) bold:NO in:v];
+    self.sensLabel = [self label:@"" at:NSMakeRect(440, top - 88, 56, 20) bold:NO in:v];
     [self sliderChanged:nil];
-    [self label:@"camera sensitivity (slow ... fast)" at:NSMakeRect(150, top - 120, 340, 16) bold:NO in:v].font = [NSFont systemFontOfSize:11];
+    [self label:@"camera sensitivity (slow ... fast)" at:NSMakeRect(150, top - 108, 340, 16) bold:NO in:v].font = [NSFont systemFontOfSize:11];
     self.hud = [NSButton checkboxWithTitle:@"Metal performance HUD (F3 shows / hides it in game)" target:nil action:nil];
-    self.hud.frame = NSMakeRect(16, top - 164, 480, 22); self.hud.state = c.hud ? NSControlStateValueOn : NSControlStateValueOff;
+    self.hud.frame = NSMakeRect(16, top - 140, 480, 22); self.hud.state = c.hud ? NSControlStateValueOn : NSControlStateValueOff;
     [v addSubview:self.hud];
     self.full = [NSButton checkboxWithTitle:@"Full screen (F10 in game)" target:nil action:nil];
-    self.full.frame = NSMakeRect(16, top - 194, 480, 22); self.full.state = c.fullscreen ? NSControlStateValueOn : NSControlStateValueOff;
+    self.full.frame = NSMakeRect(16, top - 166, 480, 22); self.full.state = c.fullscreen ? NSControlStateValueOn : NSControlStateValueOff;
     [v addSubview:self.full];
     self.show = [NSButton checkboxWithTitle:@"Show this window at startup (hold Option to bring it back)" target:nil action:nil];
-    self.show.frame = NSMakeRect(16, top - 224, 480, 22); self.show.state = c.show_launcher ? NSControlStateValueOn : NSControlStateValueOff;
+    self.show.frame = NSMakeRect(16, top - 192, 480, 22); self.show.state = c.show_launcher ? NSControlStateValueOn : NSControlStateValueOff;
     [v addSubview:self.show];
     self.prep = [[StwPrepareView alloc] initWithParent:v frame:NSMakeRect(16, 14, 488, 150)];
     [self buildControls:v2];

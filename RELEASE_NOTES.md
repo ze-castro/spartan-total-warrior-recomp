@@ -1,11 +1,25 @@
-# Spartan: Total Warrior for macOS 1.0.0
+# Spartan: Total Warrior for macOS 1.0.1
+
+## What's new in 1.0.1
+
+A small fix to the launcher window. While the game was being prepared on the first run, two things overlapped:
+
+* the "Copying the game files" progress bar stayed on top of the *Choose disc image or folder...* button after the copy had finished;
+* the "Preparing the game for this Mac" panel covered the *Show this window at startup* checkbox.
+
+The progress bar now takes the button's place only while the copy runs, and the options above the preparation panel are spaced so nothing
+overlaps. Nothing else changed: the game, its saves and your settings are the same as in 1.0.0.
+
+---
+
+# About this release (1.0.0 and later)
 
 First release. A native Apple Silicon port of the original Xbox game, built by translating the game's own code on your Mac. You need your own
 copy of the game (a PAL / Europe disc image); nothing from the game is included in this download.
 
 ## Install
 
-1. Download `Spartan-Total-Warrior-1.0.0-macos-arm64.dmg` (or `.zip`) and drag the app to Applications.
+1. Download `Spartan-Total-Warrior-1.0.1-macos-arm64.dmg` (or `.zip`) and drag the app to Applications.
 2. The app is not signed by an Apple developer account. The first time, right-click the app and choose **Open**, then **Open** again (or run
    `xattr -dr com.apple.quarantine "/Applications/Spartan Total Warrior.app"`).
 3. You need the Xcode command line tools (`xcode-select --install`) and Python 3 (it comes with them).
